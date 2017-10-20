@@ -1,0 +1,70 @@
+
+
+/***********************************************************************************************
+ * 	Basic time interval between button presses using Perdioc Interrupt Timer(PIT) to increment a variable
+	every millisecond
+ *
+ * 
+ **********************************************************************************************/
+#include "fsl_device_registers.h"
+#include "board.h"
+#include "fsl_debug_console.h"
+#include "fsl_pit_driver.h"
+
+unsigned long msec=0, start, end, interval;
+char count=0;
+
+void PIT_IRQHandler()
+{
+	PIT_DRV_ClearIntFlag(0,0);
+	msec++;
+}
+
+void PORTC_PORTD_IRQHandler()
+{
+	GPIO_DRV_ClearPinIntFlag(SW1);
+	if(count==0)
+	{
+		start = msec;
+		count++;
+	}
+	else if (count == 1)
+	{
+		end = msec;
+		count = 0;
+		interval =end-start;
+		PRINTF("Time is: %d msec\r\n",interval);
+	}
+}
+
+int main(void)
+{
+	// Define device configuration.
+	pit_user_config_t pitInit = {
+	    .isInterruptEnabled = true,// Disable timer interrupt.
+	    .periodUs = 1000U             // Set timer period to 20 us.
+	};
+
+	//Initialise the FRDM-KL26Z Board
+	hardware_init();
+
+	// Initialize PIT instance 0. Timers will stop running in debug mode.
+	PIT_DRV_Init(0, false);
+	// Initialize PIT instance 0, timer 0.
+	PIT_DRV_InitChannel(0, 0, &pitInit);
+
+
+
+	 PIT_DRV_StartTimer(0,0);
+
+
+    while(1) {
+    	// Main routine that simply echoes received characters forever
+
+	}
+    /* Never leave main */
+    return 0;
+}
+////////////////////////////////////////////////////////////////////////////////
+// EOF
+////////////////////////////////////////////////////////////////////////////////
